@@ -1,0 +1,8 @@
+# ide stuff
+.idea
+
+# rube temp files
+*.gem
+Gemfile.lock
+.bundle
+vendor

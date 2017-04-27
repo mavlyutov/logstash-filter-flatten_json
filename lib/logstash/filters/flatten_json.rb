@@ -25,8 +25,8 @@ class LogStash::Filters::FlattenJson < LogStash::Filters::Base
 
   public
   def register
-    # Add instance variables 
-  end # def register
+    # Nothing to do here
+  end
 
   public
   def filter(event)

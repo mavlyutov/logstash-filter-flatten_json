@@ -8,20 +8,14 @@ require "logstash/namespace"
 # It is only intended to be used as an .
 class LogStash::Filters::FlattenJson < LogStash::Filters::Base
 
-  # Setting the config_name here is required. This is how you
-  # configure this filter from your Logstash config.
-  #
-  # filter {
-  #    {
-  #     message => "My message..."
-  #   }
-  # }
-  #
   config_name "flatten_json"
-  
-  # Replace the message with this value.
-  config :message, :validate => :string, :default => "Hello World!"
-  
+
+  # The configuration for the filter:
+  # [source,ruby]
+  #     source => source_field
+  #
+  # The above would parse the json from the `message` field
+  config :source, :validate => :string, :required => true
 
   public
   def register
@@ -30,14 +24,52 @@ class LogStash::Filters::FlattenJson < LogStash::Filters::Base
 
   public
   def filter(event)
+    @logger.debug? && @logger.debug("Running flatten_json filter", :event => event)
 
-    if @message
-      # Replace the event message with our message as configured in the
-      # config file.
-      event.set("message", @message)
+    source = event.get(@source)
+    return unless source
+
+    flatten_json = flatten(source, '')
+    flatten_json.each do |key, value|
+      event.set(key, value)
     end
 
     # filter_matched should go in the last line of our successful code
     filter_matched(event)
-  end # def filter
-end # class LogStash::Filters::FlattenJson
+    @logger.debug? && @logger.debug("Event after flatten_json filter", :event => event)
+  end
+
+  def flatten(json, prefix)
+    if json && !json.empty?
+      json.keys.each do |key|
+        if prefix.empty?
+          full_path = key
+        else
+          full_path = [prefix, key].join('.')
+        end
+
+        if json[key].is_a?(Hash)
+          value = json[key]
+          json.delete key
+          json.merge! flatten(value, full_path)
+        elsif json[key].is_a?(Array)
+          json[key].each_with_index do |item, index|
+            current_path = [full_path, index].join('.')
+            if item.is_a?(Hash)
+              json.merge! flatten(item, current_path)
+            else
+              json[current_path] = item
+            end
+          end
+          json.delete key
+        else
+          value = json[key]
+          json.delete key
+          json[full_path] = value
+        end
+      end
+    end
+    return json
+  end
+
+end

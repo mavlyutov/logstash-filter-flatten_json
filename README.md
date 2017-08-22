@@ -6,6 +6,39 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 ## Documentation
 
+This filter plugin will flatten json data into strings, i.e.
+```json
+{
+    "key_1": "value_1",
+    "key_2": 2,
+    "key_3": {
+        "nested_key_1": "nested_value_1",
+        "nested_key_2": [1, 2, "a"]
+    }
+}
+```
+
+example configuration:
+```
+filter {
+    flatten_json {
+        source => "message"
+    }
+}
+```
+
+the filter will enrich 'event' with following key-value pairs:
+```ascii
+key_1: "value_1"
+key_2: 2
+key_3.nested_key_1: "nested_value_1"
+key_3.nested_key_2.0: 1
+key_3.nested_key_2.1: 2
+key_3.nested_key_2.2: "a"
+```
+
+This is very convenient if you have stats data from mongodb or docker-stats and you want to further process it or send to graphite server.
+
 Logstash provides infrastructure to automatically generate documentation for this plugin. We use the asciidoc format to write documentation so any comments in the source code will be first converted into asciidoc and then into html. All plugin documentation are placed under one [central location](http://www.elastic.co/guide/en/logstash/current/).
 
 - For formatting code or config example, you can use the asciidoc `[source,ruby]` directive
@@ -14,6 +47,12 @@ Logstash provides infrastructure to automatically generate documentation for thi
 ## Need Help?
 
 Need help? Try #logstash on freenode IRC or the https://discuss.elastic.co/c/logstash discussion forum.
+
+## Installation from sources
+```bash
+wget https://github.com/mavlyutov/logstash-filter-flatten_json/releases/download/0.1.0/logstash-filter-flatten_json-0.1.0.gem
+/usr/share/logstash/bin/logstash-plugin install --no-verify logstash-filter-flatten_json-0.1.0.gem
+```
 
 ## Developing
 
